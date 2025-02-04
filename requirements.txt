@@ -1,0 +1,3 @@
+flask
+libretranslatepy
+gunicorn  # Required for deployment
