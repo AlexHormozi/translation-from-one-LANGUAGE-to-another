@@ -1,3 +1,2 @@
-flask
-libretranslatepy
-gunicorn  # Required for deployment
+Flask==2.3.2
+requests==2.28.1
