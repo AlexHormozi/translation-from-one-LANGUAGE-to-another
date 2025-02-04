@@ -1,42 +1,50 @@
 from flask import Flask, request, jsonify
+import requests
 import os
 
 app = Flask(__name__)
 
-# Enable debug mode
-app.config["DEBUG"] = True
+# Set LibreTranslate URL (you can change this to your own instance if you are self-hosting)
+LIBRE_TRANSLATE_URL = "https://libretranslate.de/translate"
 
 @app.route('/translate', methods=['POST'])
 def translate():
     try:
-        # Get the incoming JSON data
         data = request.get_json()
         print(f"Received data: {data}")  # Log incoming data
 
-        # Check if the data is valid
         if not data:
             return jsonify({"error": "Invalid or missing JSON data"}), 400
-        
-        # Extract parameters from the incoming data
+
+        # Extract parameters from the request body
         text = data.get("text")
         source = data.get("source")
         target = data.get("target")
 
-        # Ensure all required fields are present
+        # Validate the parameters
         if not text or not source or not target:
             return jsonify({"error": "Missing required fields (text, source, target)"}), 400
 
-        # Dummy translation logic for testing (you can replace this with actual translation logic)
-        translated_text = f"Translated '{text}' from {source} to {target}"
+        # Prepare the payload for the LibreTranslate API
+        payload = {
+            'q': text,
+            'source': source,
+            'target': target
+        }
 
-        # Return the translated text as a JSON response
-        return jsonify({"translated_text": translated_text})
+        # Send POST request to LibreTranslate API
+        response = requests.post(LIBRE_TRANSLATE_URL, data=payload)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            translated_text = response.json()['translatedText']
+            return jsonify({"translated_text": translated_text})
+        else:
+            return jsonify({"error": "Translation failed, try again later."}), 500
 
     except Exception as e:
-        # Log the exception for debugging
         print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # Ensure the app is running on the correct host and port for Render
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
